@@ -4,6 +4,11 @@ import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
+import android.view.accessibility.AccessibilityNodeInfo
+import androidx.core.content.withStyledAttributes
+import androidx.core.view.AccessibilityDelegateCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import java.lang.Math.PI
 import kotlin.math.cos
 import kotlin.math.min
@@ -14,6 +19,13 @@ private enum class FanSpeed(val label: Int) {
     LOW(R.string.fan_low),
     MEDIUM(R.string.fan_medium),
     HIGH(R.string.fan_high);
+
+    fun next() = when (this) {
+        OFF -> LOW
+        LOW -> MEDIUM
+        MEDIUM -> HIGH
+        HIGH -> OFF
+    }
 }
 
 private const val RADIUS_OFFSET_LABEL = 30
@@ -34,6 +46,49 @@ class DialView @JvmOverloads constructor(
         textSize = 55.0f
         typeface = Typeface.create("", Typeface.BOLD)
     }
+    private var fanSpeedLowColor = 0
+    private var fanSpeedMediumColor = 0
+    private var fanSpeedMaxColor = 0
+    private val defaultOnColor = Color.GREEN
+
+    init {
+        isClickable = true
+
+        context.withStyledAttributes(attrs, R.styleable.DialView) {
+            fanSpeedLowColor = getColor(R.styleable.DialView_fanLowColor, defaultOnColor)
+            fanSpeedMediumColor = getColor(R.styleable.DialView_fanMediumColor, defaultOnColor)
+            fanSpeedMaxColor = getColor(R.styleable.DialView_fanMaxColor, defaultOnColor)
+        }
+
+        updateContentDescription()
+
+        ViewCompat.setAccessibilityDelegate(this, object : AccessibilityDelegateCompat() {
+            override fun onInitializeAccessibilityNodeInfo(
+                host: View,
+                info: AccessibilityNodeInfoCompat
+            ) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                val customClick = AccessibilityNodeInfoCompat.AccessibilityActionCompat(
+                    AccessibilityNodeInfo.ACTION_CLICK,
+                    context.getString(accessibilityCurrentActionDescription())
+                )
+                info.addAction(customClick)
+            }
+        })
+    }
+
+    private fun accessibilityCurrentActionDescription() = if (fanSpeed != FanSpeed.HIGH) R.string.change else R.string.reset
+
+    override fun performClick(): Boolean {
+        if(super.performClick()) return true
+
+        fanSpeed = fanSpeed.next()
+        contentDescription = resources.getString(fanSpeed.label)
+
+        invalidate()
+        updateContentDescription()
+        return true
+    }
 
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         radius = (min(width, height) / 2.0 * 0.8).toFloat()
@@ -41,8 +96,13 @@ class DialView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        // Set dial background color to green if selection not off.
-        paint.color = if (fanSpeed == FanSpeed.OFF) Color.GRAY else Color.GREEN
+        // Set dial background color from attributes
+        paint.color = when (fanSpeed) {
+            FanSpeed.OFF -> Color.GRAY
+            FanSpeed.LOW -> fanSpeedLowColor
+            FanSpeed.MEDIUM -> fanSpeedMediumColor
+            FanSpeed.HIGH -> fanSpeedMaxColor
+        }
         // Draw the dial.
         canvas.drawCircle((width / 2).toFloat(), (height / 2).toFloat(), radius, paint)
 
@@ -64,10 +124,17 @@ class DialView @JvmOverloads constructor(
     private fun PointF.computeXYForSpeed(pos: FanSpeed, radius: Float) {
         // Angles are in radians.
         // 1 grau = PI/180 radianos
+        // start angle => 179,909°
+        // angle when is ON:
+        // angle = 179° + 1 * 179
         // Angles are in radians.
         val startAngle = Math.PI * (9 / 8.0)
         val angle = startAngle + pos.ordinal * (Math.PI / 4)
         x = (radius * cos(angle)).toFloat() + width / 2
         y = (radius * sin(angle)).toFloat() + height / 2
+    }
+
+    fun updateContentDescription() {
+        contentDescription = resources.getString(fanSpeed.label)
     }
 }
