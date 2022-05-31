@@ -17,6 +17,7 @@
 package com.example.android.devbyteviewer
 
 import android.app.Application
+import android.os.Build
 import androidx.work.*
 import com.example.android.devbyteviewer.work.RefreshDataWorker
 import kotlinx.coroutines.CoroutineScope
@@ -75,9 +76,22 @@ class DevByteApplication : Application() {
         )
         */
 
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.UNMETERED)
+            .setRequiresBatteryNotLow(true)
+            .setRequiresCharging(true).apply {
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    setRequiresDeviceIdle(true)
+                }
+            }
+            .build()
+
 //        Periodic work can't have an initial delay as one of its constraints.
         val repeatingRequest = PeriodicWorkRequestBuilder<RefreshDataWorker>(
-            15, TimeUnit.MINUTES).build()
+            1, TimeUnit.DAYS)
+            .setConstraints(constraints)
+            .build()
+        Timber.d("Periodic Work request for sync scheduled")
         WorkManager.getInstance().enqueueUniquePeriodicWork(
             RefreshDataWorker.WORK_NAME,
             ExistingPeriodicWorkPolicy.REPLACE,
