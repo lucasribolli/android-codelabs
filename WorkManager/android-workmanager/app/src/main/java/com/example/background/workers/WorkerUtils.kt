@@ -82,6 +82,7 @@ fun makeStatusNotification(message: String, context: Context) {
             .setContentTitle(NOTIFICATION_TITLE)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setStyle(NotificationCompat.BigTextStyle())
             .setVibrate(LongArray(0))
 
     // Show the notification
