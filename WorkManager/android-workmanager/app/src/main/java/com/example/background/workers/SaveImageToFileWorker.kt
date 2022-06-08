@@ -13,7 +13,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 private const val TAG = "SaveImageToFileWorker"
-class SaveImageToFIleWorker(context: Context, params: WorkerParameters): Worker(context, params) {
+class SaveImageToFileWorker(context: Context, params: WorkerParameters): Worker(context, params) {
     private val title = "Blurred Image"
     private val dateFormatter = SimpleDateFormat(
         "yyyy.MM.dd 'at' HH:mm:ss z",

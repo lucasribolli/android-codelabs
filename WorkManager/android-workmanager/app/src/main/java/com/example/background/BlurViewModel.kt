@@ -20,12 +20,13 @@ import android.app.Application
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.work.*
 import com.example.background.workers.BlurWorker
 import com.example.background.workers.CleanupWorker
-import com.example.background.workers.SaveImageToFIleWorker
+import com.example.background.workers.SaveImageToFileWorker
 
 
 class BlurViewModel(application: Application) : ViewModel() {
@@ -33,9 +34,13 @@ class BlurViewModel(application: Application) : ViewModel() {
     internal var imageUri: Uri? = null
     internal var outputUri: Uri? = null
     private val workManager = WorkManager.getInstance(application)
+    internal val outputWorkInfos: LiveData<List<WorkInfo>>
 
     init {
         imageUri = getImageUri(application.applicationContext)
+        // Whenever the current work Id changes the WorkInfo
+        // the UI is listening to changes
+        outputWorkInfos = workManager.getWorkInfosByTagLiveData(TAG_OUTPUT)
     }
     /**
      * Create the WorkRequest to apply the blur and save the resulting image
@@ -45,7 +50,11 @@ class BlurViewModel(application: Application) : ViewModel() {
         val cleanupTempFolder = OneTimeWorkRequestBuilder<CleanupWorker>()
             .build()
 
-        var continuation = workManager.beginWith(cleanupTempFolder)
+        // REPLACE because the use can decide to blur another image
+        var continuation = workManager.beginUniqueWork(
+            IMAGE_MANIPULATION_WORK_NAME,
+            ExistingWorkPolicy.REPLACE,
+            cleanupTempFolder)
 
         // Add WorkRequests to blur the image the number of times requested
         for (i in 0 until blurLevel) {
@@ -63,7 +72,8 @@ class BlurViewModel(application: Application) : ViewModel() {
             continuation = continuation.then(blur.build())
         }
 
-        val save = OneTimeWorkRequestBuilder<SaveImageToFIleWorker>()
+        val save = OneTimeWorkRequestBuilder<SaveImageToFileWorker>()
+            .addTag(TAG_OUTPUT)
             .setConstraints(Constraints.Builder().setRequiresStorageNotLow(true).build())
             .build()
 
