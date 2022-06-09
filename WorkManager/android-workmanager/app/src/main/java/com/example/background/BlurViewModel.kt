@@ -56,10 +56,13 @@ class BlurViewModel(application: Application) : ViewModel() {
             ExistingWorkPolicy.REPLACE,
             cleanupTempFolder)
 
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
         // Add WorkRequests to blur the image the number of times requested
         for (i in 0 until blurLevel) {
             val blur = OneTimeWorkRequestBuilder<BlurWorker>()
-                .setConstraints(Constraints.Builder().setRequiresStorageNotLow(true).build())
 
             // Input the Uri if this is the first blur operation
             // After the first blur operation the input will be the output of previous
@@ -74,7 +77,7 @@ class BlurViewModel(application: Application) : ViewModel() {
 
         val save = OneTimeWorkRequestBuilder<SaveImageToFileWorker>()
             .addTag(TAG_OUTPUT)
-            .setConstraints(Constraints.Builder().setRequiresStorageNotLow(true).build())
+            .setConstraints(constraints)
             .build()
 
         continuation = continuation.then(save)
