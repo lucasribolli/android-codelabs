@@ -39,6 +39,7 @@ class BlurActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.goButton.setOnClickListener { viewModel.applyBlur(blurLevel) }
+        binding.cancelButton.setOnClickListener { viewModel.cancelWork() }
         viewModel.outputWorkInfos.observe(this, workInfosObserver())
     }
 
