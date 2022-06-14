@@ -85,16 +85,19 @@ class DefaultTasksRepository private constructor(application: Application) {
     }
 
     private suspend fun updateTasksFromRemoteDataSource() {
-        val remoteTasks = tasksRemoteDataSource.getTasks()
 
-        if (remoteTasks is Success) {
-            // Real apps might want to do a proper sync.
-            tasksLocalDataSource.deleteAllTasks()
-            remoteTasks.data.forEach { task ->
-                tasksLocalDataSource.saveTask(task)
+        when(val remoteTasks = tasksRemoteDataSource.getTasks()) {
+            is Success -> {
+                // Real apps might want to do a proper sync.
+                tasksLocalDataSource.deleteAllTasks()
+                remoteTasks.data.forEach { task ->
+                    tasksLocalDataSource.saveTask(task)
+                }
             }
-        } else if (remoteTasks is Result.Error) {
-            throw remoteTasks.exception
+            is Result.Error -> {
+                throw remoteTasks.exception
+            }
+            Result.Loading -> {}
         }
     }
 
