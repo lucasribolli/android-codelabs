@@ -1,8 +1,8 @@
 package com.example.android.architecture.blueprints.todoapp.tasks
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.android.architecture.blueprints.todoapp.data.Task
+import com.example.android.architecture.blueprints.todoapp.data.source.FakeTaskRepository
 import com.example.android.architecture.blueprints.todoapp.getOrAwaitValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
@@ -11,19 +11,21 @@ import org.hamcrest.core.IsNot.not
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 
-@RunWith(AndroidJUnit4::class)
-@Config(sdk = [30])
 class TasksViewModelTest {
     private lateinit var tasksViewModel: TasksViewModel
 
+    private lateinit var tasksRepository: FakeTaskRepository
+
     @Before
     fun setupViewModel() {
-        // TasksViewModel needs an Application context as parameter
-        // In local test, AndroidX provides a simulated Android environment
-        tasksViewModel = TasksViewModel(ApplicationProvider.getApplicationContext())
+        tasksRepository = FakeTaskRepository()
+        tasksRepository.addTasks(
+            Task("Title1", "Description1"),
+            Task("Title2", "Description2", true),
+            Task("Title3", "Description3", true)
+        )
+        tasksViewModel = TasksViewModel(tasksRepository)
     }
 
     // When you write tests that include testing LiveData, use this rule!
