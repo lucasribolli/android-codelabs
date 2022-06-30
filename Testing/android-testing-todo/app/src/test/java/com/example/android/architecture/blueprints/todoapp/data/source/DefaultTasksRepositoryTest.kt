@@ -1,18 +1,20 @@
 package com.example.android.architecture.blueprints.todoapp.data.source
 
+import com.example.android.architecture.blueprints.todoapp.MainCoroutineRule
 import com.example.android.architecture.blueprints.todoapp.data.Result
 import com.example.android.architecture.blueprints.todoapp.data.Task
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
 class DefaultTasksRepositoryTest {
+
     private val task1 = Task("Title1", "Description1")
     private val task2 = Task("Title2", "Description2")
     private val task3 = Task("Title3", "Description3")
@@ -26,19 +28,25 @@ class DefaultTasksRepositoryTest {
     // Class under test
     private lateinit var tasksRepository: DefaultTasksRepository
 
+    // Set the main coroutines dispatcher for unit testing.
+    @ExperimentalCoroutinesApi
+    @get:Rule
+    var mainCoroutineRule = MainCoroutineRule()
+
     @Before
     fun createRepository() {
         tasksRemoteDataSource = FakeDataSource(ArrayList(remoteTasks))
         tasksLocalDataSource = FakeDataSource(ArrayList(localTasks))
-        // TODO Dispatchers.Unconfined should be replaced with Dispatchers.Main
-        // TODO this requires understanding more about coroutines + testing
-        // TODO so we will keep this as Unconfined for now.
+        // MainCoroutineRule swaps the Dispatcher.Main for a TestCoroutineDispatcher
+        // TestCoroutineDispatcher is able to pause execution
         tasksRepository = DefaultTasksRepository(
-            tasksRemoteDataSource, tasksLocalDataSource, Dispatchers.Unconfined)
+            tasksRemoteDataSource, tasksLocalDataSource, Dispatchers.Main)
     }
 
     @Test
-    fun getTasks_requestsAllTasksFromRemoteDataSource() = runBlockingTest {
+    // using mainCoroutineRule.runBlockingTest to prevent
+    // creation of multiple instances of TestCoroutineDispatcher
+    fun getTasks_requestsAllTasksFromRemoteDataSource() = mainCoroutineRule.runBlockingTest {
         // When tasks are requested from the tasks repository
         val tasks = tasksRepository.getTasks(true) as Result.Success
 

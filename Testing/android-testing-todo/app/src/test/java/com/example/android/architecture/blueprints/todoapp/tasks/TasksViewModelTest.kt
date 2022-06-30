@@ -1,9 +1,13 @@
 package com.example.android.architecture.blueprints.todoapp.tasks
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.example.android.architecture.blueprints.todoapp.Event
+import com.example.android.architecture.blueprints.todoapp.MainCoroutineRule
+import com.example.android.architecture.blueprints.todoapp.R
 import com.example.android.architecture.blueprints.todoapp.data.Task
 import com.example.android.architecture.blueprints.todoapp.data.source.FakeTaskRepository
 import com.example.android.architecture.blueprints.todoapp.getOrAwaitValue
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.nullValue
@@ -17,6 +21,10 @@ class TasksViewModelTest {
 
     private lateinit var tasksRepository: FakeTaskRepository
 
+    @ExperimentalCoroutinesApi
+    @get:Rule
+    var mainCoroutineRule = MainCoroutineRule()
+
     @Before
     fun setupViewModel() {
         tasksRepository = FakeTaskRepository()
@@ -27,10 +35,6 @@ class TasksViewModelTest {
         )
         tasksViewModel = TasksViewModel(tasksRepository)
     }
-
-    // When you write tests that include testing LiveData, use this rule!
-    @get:Rule
-    var instantExecutorRule = InstantTaskExecutorRule()
 
     @Test
     fun addNewTask_setsNewTaskEvent() {
@@ -67,5 +71,17 @@ class TasksViewModelTest {
         tasksViewModel.setFiltering(TasksFilterType.ALL_TASKS)
         // Then the "Add task" action is visible
         assertThat(tasksViewModel.tasksAddViewVisible.getOrAwaitValue(), `is`(true))
+    }
+
+    @Test
+    fun completeTask_dataAndSnackbarUpdated() {
+        val task = Task("Title", "Description")
+        tasksRepository.addTasks(task)
+        tasksViewModel.completeTask(task, true)
+
+        assertThat(tasksRepository.tasksServiceData[task.id]?.isCompleted, `is`(true))
+
+        val snackBarText: Event<Int> = tasksViewModel.snackbarText.getOrAwaitValue()
+        assertThat(snackBarText.getContentIfNotHandled(), `is`(R.string.task_marked_complete))
     }
 }
