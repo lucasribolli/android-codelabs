@@ -79,6 +79,8 @@ class SearchRepositoriesViewModel(
             .flatMapLatest { searchRepo(queryString = it.query) }
             .cachedIn(viewModelScope)
 
+        // Guarantee that we will not scroll the list back up to the top with new
+        // emissions of PagingData if the user has already scrolled.
         state = combine(
             searches,
             queriesScrolled,
