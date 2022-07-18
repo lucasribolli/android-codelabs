@@ -65,7 +65,7 @@ class SearchRepositoriesActivity : AppCompatActivity() {
      */
     private fun ActivitySearchRepositoriesBinding.bindState(
         uiState: StateFlow<UiState>,
-        pagingData: Flow<PagingData<Repo>>,
+        pagingData: Flow<PagingData<UiModel>>,
         uiActions: (UiAction) -> Unit
     ) {
         val repoAdapter = ReposAdapter()
@@ -126,7 +126,7 @@ class SearchRepositoriesActivity : AppCompatActivity() {
     private fun ActivitySearchRepositoriesBinding.bindList(
         repoAdapter: ReposAdapter,
         uiState: StateFlow<UiState>,
-        pagingData: Flow<PagingData<Repo>>,
+        pagingData: Flow<PagingData<UiModel>>,
         onScrollChanged: (UiAction.Scroll) -> Unit
     ) {
         retryButton.setOnClickListener { repoAdapter.retry() }
