@@ -19,12 +19,10 @@ package com.example.android.codelabs.paging.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.PagingData
-import androidx.paging.cachedIn
-import androidx.paging.insertSeparators
-import androidx.paging.map
+import androidx.paging.*
 import com.example.android.codelabs.paging.data.GithubRepository
 import com.example.android.codelabs.paging.model.Repo
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -134,6 +132,7 @@ class SearchRepositoriesViewModel(
             }
 }
 
+
 sealed class UiAction {
     data class Search(val query: String) : UiAction()
     data class Scroll(val currentQuery: String) : UiAction()
@@ -157,3 +156,31 @@ sealed class UiModel {
 
 private val UiModel.RepoItem.roundedStarCount: Int
     get() = this.repo.stars / 10_000
+
+@OptIn(ExperimentalCoroutinesApi::class)
+fun Flow<CombinedLoadStates>.asRemotePresentationState(): Flow<RemotePresentationState> =
+    scan(RemotePresentationState.INITIAL) { state, loadState ->
+        when (state) {
+            RemotePresentationState.PRESENTED -> when (loadState.mediator?.refresh) {
+                is LoadState.Loading -> RemotePresentationState.REMOTE_LOADING
+                else -> state
+            }
+            RemotePresentationState.INITIAL -> when (loadState.mediator?.refresh) {
+                is LoadState.Loading -> RemotePresentationState.REMOTE_LOADING
+                else -> state
+            }
+            RemotePresentationState.REMOTE_LOADING -> when (loadState.source.refresh) {
+                is LoadState.Loading -> RemotePresentationState.SOURCE_LOADING
+                else -> state
+            }
+            RemotePresentationState.SOURCE_LOADING -> when (loadState.source.refresh) {
+                is LoadState.NotLoading -> RemotePresentationState.PRESENTED
+                else -> state
+            }
+        }
+    }
+        .distinctUntilChanged()
+
+enum class RemotePresentationState {
+    INITIAL, REMOTE_LOADING, SOURCE_LOADING, PRESENTED
+}

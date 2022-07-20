@@ -6,9 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.android.codelabs.paging.model.Repo
 
-@Database(entities = [Repo::class], version = 1, exportSchema = false)
+@Database(
+    entities = [Repo::class, RemoteKeys::class],
+    version = 1,
+    exportSchema = false
+)
 abstract class RepoDatabase : RoomDatabase() {
     abstract fun getDao(): RepoDao
+    abstract fun getRemoteKeysDao(): RemoteKeysDao
 
     companion object {
         @Volatile
@@ -20,7 +25,8 @@ abstract class RepoDatabase : RoomDatabase() {
                     context,
                     RepoDatabase::class.java,
                     "github.db"
-                ).build()
+                )
+                    .build()
             }
         }
     }

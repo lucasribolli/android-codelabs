@@ -7,9 +7,7 @@ import com.example.android.codelabs.paging.api.IN_QUALIFIER
 import com.example.android.codelabs.paging.data.GithubRepository.Companion.NETWORK_PAGE_SIZE
 import com.example.android.codelabs.paging.model.Repo
 
-// GitHub page API is 1 based: https://developer.github.com/v3/#pagination
-const val GITHUB_STARTING_PAGE_INDEX = 1
-
+// ! unused
 class GithubPagingSource(
     private val service: GithubService,
     private val query: String
