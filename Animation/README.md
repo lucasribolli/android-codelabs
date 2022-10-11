@@ -1,0 +1,1 @@
+![alt text](https://github.com/lucasribolli/android-codelabs/blob/master/images/animation-ObjectAnimator-and-Motion-Layout.png?raw=true)
